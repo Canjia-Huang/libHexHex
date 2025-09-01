@@ -127,7 +127,7 @@ inline std::ostream& operator<<(std::ostream &os, const PolyEdge &E)
 /*
  * Computes the intersection x (range) of the given Poly Edge with a y-line
  */
-std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
+inline std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
 {
     // Return empty range if Edge does not cut the y-line
     if (y < E.A.b() || y > std::max(E.A.t(), E.B.t())) return {INFINITY, -INFINITY};
@@ -148,7 +148,7 @@ std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
     return {left, right};
 };
 
-std::pair<double, double> poly_edges_x_range(const int32 y, const std::vector<PolyEdge>& Es)
+inline std::pair<double, double> poly_edges_x_range(const int32 y, const std::vector<PolyEdge>& Es)
 {
     double x_min = INFINITY;
     double x_max = -INFINITY;
@@ -199,7 +199,7 @@ struct TetEdge
 /*
  * "Computes" the intersection of a point A which lies on the z-plane as an uncertainty point in xy
  */
-BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
+inline BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
 {
     assert(A[2] == z);
     return BB2d{.p = {A[0],A[1]}, .hs = {0.0,0.0}};
@@ -208,7 +208,7 @@ BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
 /*
  * Computes the intersection of a line segment AB which pierces the z-plane as an uncertainty point in xy
  */
-BB2d tet_edge_intersection_z(const int z, const TetEdge& E)
+inline BB2d tet_edge_intersection_z(const int z, const TetEdge& E)
 {
     // Assert strict piercing
     assert((E.A[2] < z && E.B[2] > z));
