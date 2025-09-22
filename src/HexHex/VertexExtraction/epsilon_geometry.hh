@@ -25,7 +25,7 @@ struct BB2d
 
 inline double compute_epsilon(const double GLOBAL_EPSILON, const double dx, const double one_over_dy)
 {
-    return GLOBAL_EPSILON + GLOBAL_EPSILON * abs(dx * one_over_dy);
+    return GLOBAL_EPSILON + GLOBAL_EPSILON * std::abs(dx * one_over_dy);
 }
 
 /*
