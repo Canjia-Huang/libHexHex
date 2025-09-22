@@ -80,13 +80,13 @@ struct PolyEdge
     {
         Right() : dx(0), dy(0), dyInv(0), epsilon(0) {}
 
-        Right(const BB2d& A_, const BB2d& B_, const double EPSILON) :
+        Right(const BB2d& A_, const BB2d& B_, const double _epsilon) :
             A((B_.r() < A_.r())? A_.tr() : A_.br()),
             B((B_.r() < A_.r())? B_.tr() : B_.br()),
             dx(B[0] - A[0]),
             dy(B[1] - A[1]),
             dyInv(1.0 / dy),
-            epsilon(EPSILON * (std::abs(dx*dyInv) + 1))
+            epsilon(compute_epsilon(_epsilon, dx, dyInv))
         {
             assert(A_.b() <= B_.b());
             assert(epsilon >= 0);
