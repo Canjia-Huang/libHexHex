@@ -23,9 +23,9 @@ struct BB2d
     inline double r() const {return p[0] + hs[0];} // right
 };
 
-inline double compute_epsilon(const double GLOBAL_EPSILON, const double dx, const double one_over_dy)
+inline double compute_epsilon(const double global_eps, const double dx, const double one_over_dy)
 {
-    return GLOBAL_EPSILON + GLOBAL_EPSILON * abs(dx * one_over_dy);
+    return global_eps + global_eps * std::abs(dx * one_over_dy);
 }
 
 /*
@@ -53,14 +53,13 @@ struct PolyEdge
     {
         Left() : dx(0), dy(0), dyInv(0), epsilon(0) {}
 
-        Left(const BB2d& A_, const BB2d& B_, const double EPSILON) :
+        Left(const BB2d& A_, const BB2d& B_, const double epsilon) :
             A((B_.l() < A_.l())? A_.bl() : A_.tl()),
             B((B_.l() < A_.l())? B_.bl() : B_.tl()),
             dx(B[0] - A[0]),
             dy(B[1] - A[1]),
             dyInv(1.0 / dy),
-            epsilon(compute_epsilon(EPSILON, dx, dyInv))
-            //epsilon(EPSILON * (std::abs(dx*dyInv) + 1))
+            epsilon(compute_epsilon(epsilon, dx, dyInv))
         {
             assert(A_.b() <= B_.b());
             assert(epsilon >= 0);
@@ -81,13 +80,13 @@ struct PolyEdge
     {
         Right() : dx(0), dy(0), dyInv(0), epsilon(0) {}
 
-        Right(const BB2d& A_, const BB2d& B_, const double EPSILON) :
+        Right(const BB2d& A_, const BB2d& B_, const double _epsilon) :
             A((B_.r() < A_.r())? A_.tr() : A_.br()),
             B((B_.r() < A_.r())? B_.tr() : B_.br()),
             dx(B[0] - A[0]),
             dy(B[1] - A[1]),
             dyInv(1.0 / dy),
-            epsilon(EPSILON * (std::abs(dx*dyInv) + 1))
+            epsilon(compute_epsilon(_epsilon, dx, dyInv))
         {
             assert(A_.b() <= B_.b());
             assert(epsilon >= 0);
@@ -101,10 +100,10 @@ struct PolyEdge
         const double epsilon;
     };
 
-    PolyEdge(const BB2d& A_, const BB2d& B_, const double EPSILON) :
+    PolyEdge(const BB2d& A_, const BB2d& B_, const double _epsilon) :
         A(A_), B(B_),
-        L((A.t() < B.b())? Left{A_, B_, EPSILON} : Left{}), // ignore left & right edge if parallel
-        R((A.t() < B.b())? Right{A_, B_, EPSILON} : Right{})
+        L((A.t() < B.b())? Left{A_, B_, _epsilon} : Left{}), // ignore left & right edge if parallel
+        R((A.t() < B.b())? Right{A_, B_, _epsilon} : Right{})
     {
         assert(A_.b()-B_.b()<=10*(A_.hs[1]+B_.hs[1]));
     }
@@ -127,7 +126,7 @@ inline std::ostream& operator<<(std::ostream &os, const PolyEdge &E)
 /*
  * Computes the intersection x (range) of the given Poly Edge with a y-line
  */
-std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
+inline std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
 {
     // Return empty range if Edge does not cut the y-line
     if (y < E.A.b() || y > std::max(E.A.t(), E.B.t())) return {INFINITY, -INFINITY};
@@ -148,7 +147,7 @@ std::pair<double, double> poly_edge_x_range(const int y, const PolyEdge& E)
     return {left, right};
 };
 
-std::pair<double, double> poly_edges_x_range(const int32 y, const std::vector<PolyEdge>& Es)
+inline std::pair<double, double> poly_edges_x_range(const int32 y, const std::vector<PolyEdge>& Es)
 {
     double x_min = INFINITY;
     double x_max = -INFINITY;
@@ -199,7 +198,7 @@ struct TetEdge
 /*
  * "Computes" the intersection of a point A which lies on the z-plane as an uncertainty point in xy
  */
-BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
+inline BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
 {
     assert(A[2] == z);
     return BB2d{.p = {A[0],A[1]}, .hs = {0.0,0.0}};
@@ -208,7 +207,7 @@ BB2d tet_vertex_intersection_z(const int z, const Vec3d& A)
 /*
  * Computes the intersection of a line segment AB which pierces the z-plane as an uncertainty point in xy
  */
-BB2d tet_edge_intersection_z(const int z, const TetEdge& E)
+inline BB2d tet_edge_intersection_z(const int z, const TetEdge& E)
 {
     // Assert strict piercing
     assert((E.A[2] < z && E.B[2] > z));
