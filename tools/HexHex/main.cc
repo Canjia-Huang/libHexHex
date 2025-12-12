@@ -11,6 +11,11 @@
 #include <libTimekeeper/StopWatchPrinting.hh>
 #include <CLI/CLI.hpp>
 
+// Include the file manager header
+#include <OpenVolumeMesh/FileManager/FileManager.hh>
+// Include the polyhedral mesh header
+#include <OpenVolumeMesh/Mesh/PolyhedralMesh.hh>
+
 namespace OVM = OpenVolumeMesh;
 
 struct Options {
@@ -75,6 +80,120 @@ int main(int argc, char* argv[])
     if (res.piecewise_linear_mesh != nullptr) {
         std::cout << "Save HexHex Piecewise Linear Mesh to " << *options.outPWLFile << std::endl;
         OpenVolumeMesh::IO::ovmb_write(*options.outPWLFile, *res.piecewise_linear_mesh);
+        {
+            const auto& pwl_mesh = *res.piecewise_linear_mesh;
+
+            OpenVolumeMesh::IO::FileManager fileManager;
+            fileManager.writeFile(*options.outPWLFile, pwl_mesh);
+
+
+            std::ifstream in(*options.outPWLFile);
+            std::vector<double> points;
+            std::vector<std::pair<int, int>> half_edges;
+            std::vector<std::vector<int>> facets;
+
+            std::string line;
+            while (std::getline(in, line)) {
+                if (line.empty() || line[0] == '#')
+                    continue;
+
+                std::string prefix;
+                {
+                    std::istringstream iss(line);
+                    iss >> prefix;
+                }
+
+                if (prefix == "Vertices") {
+                    int vertices_nb;
+                    {
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+                        iss >> vertices_nb;
+                    }
+                    std::cout << "in vertices_nb: " << vertices_nb << std::endl;
+
+                    for (int v = 0; v < vertices_nb; ++v) {
+                        double x, y, z;
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+                        iss >> x >> y >> z;
+                        points.push_back(x); points.push_back(y); points.push_back(z);
+                    }
+                }
+                else if (prefix == "Edges") {
+                    int edges_nb;
+                    {
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+                        iss >> edges_nb;
+                    }
+                    std::cout << "in edges_nb: " << edges_nb << std::endl;
+
+                    for (int v = 0; v < edges_nb; ++v) {
+                        int ev0, ev1;
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+                        iss >> ev0 >> ev1;
+                        half_edges.emplace_back(ev0, ev1);
+                    }
+                }
+                else if (prefix == "Faces") {
+                    int faces_nb;
+                    {
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+                        iss >> faces_nb;
+                    }
+                    std::cout << "in faces_nb: " << faces_nb << std::endl;
+
+                    for (int f = 0; f < faces_nb; ++f) {
+                        std::getline(in, line);
+                        std::istringstream iss(line);
+
+                        int face_vertices_nb;
+                        iss >> face_vertices_nb;
+
+                        std::vector<int> cur_face_vertices;
+                        for (int e = 0; e < face_vertices_nb; ++e) {
+                            int cur_e;
+                            iss >> cur_e;
+                            cur_face_vertices.push_back(cur_e);
+                        }
+
+                        facets.push_back(cur_face_vertices);
+                    }
+                }
+            }
+
+            in.close();
+
+            std::cout << "vertices nb: " << points.size()/3 << std::endl;
+            std::cout << "edges nb: " << half_edges.size() << std::endl;
+            std::cout << "facets nb: " << facets.size() << std::endl;
+
+            std::ofstream out("result.obj");
+            for (int v = 0; v < points.size(); v += 3)
+                out << "v " << points[v] << " " << points[v+1] << " " << points[v+2] << std::endl;
+            // for (int e = 0; e < half_edges.size(); ++e) {
+            //     if (half_edges[e].first < points.size()/3 && half_edges[e].second < points.size()/3)
+            //         out << "l " << half_edges[e].first+1 << " " << half_edges[e].second+1 << std::endl;
+            // }
+
+            for (int f = 0; f < facets.size(); ++f) {
+                std::vector<int> fvs;
+                for (int e = 0; e < facets[f].size(); ++e) {
+                    const auto& he = facets[f][e];
+                    if (he%2 == 0)
+                        fvs.push_back(half_edges[he/2].first);
+                    else
+                        fvs.push_back(half_edges[(he-1)/2].second);
+                }
+
+                for (int j = 1; j < fvs.size()-1; ++j)
+                    out << "f " << fvs[0]+1 << " " << fvs[j]+1 << " " << fvs[j+1]+1 << std::endl;
+            }
+            out.close();
+        }
     } else if (options.outPWLFile) {
         std::cerr << "Piecewise-linear extraction failed!" << std::endl;
     }
