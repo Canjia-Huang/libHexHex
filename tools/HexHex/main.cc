@@ -81,9 +81,9 @@ int main(int argc, char* argv[])
         std::cout << "Save HexHex Piecewise Linear Mesh to " << *options.outPWLFile << std::endl;
 
         if (const std::string ext = options.outPWLFile->extension().string();
-            ext == "ovmb")
+            ext == ".ovmb")
             OpenVolumeMesh::IO::ovmb_write(*options.outPWLFile, *res.piecewise_linear_mesh);
-        else if (ext == "ovm") {
+        else if (ext == ".ovm") {
             OpenVolumeMesh::IO::FileManager fileManager;
             fileManager.writeFile(*options.outPWLFile, *res.piecewise_linear_mesh);
         }
