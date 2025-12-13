@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     Options options;
     app.add_option("-i, --in", options.inTetFile, "Input file (.ovmb, .ovm, .hexex)")->required();
     app.add_option("-o, --out-hex", options.outHexFile, "Output file (.ovmb, .ovm, .mesh)")->required();
-    app.add_option("--out-pwl", options.outPWLFile, "Output file for piecewise linear mesh");
+    app.add_option("--out-pwl", options.outPWLFile, "Output file for piecewise linear mesh (.ovmb, .ovm)");
     app.add_option("--report", options.outReportFile, "Output file with details about the extraction process (.json)");
     app.add_option("--config", options.inConfigFile, "Config file (.json). Used when parameters are not explicitly set.");
     app.add_option("--scale", options.igm_scaling_factor, "Parametrization scaling factor (positive integer)")->check(CLI::PositiveNumber);
